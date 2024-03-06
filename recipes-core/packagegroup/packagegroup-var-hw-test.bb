@@ -9,6 +9,8 @@ RDEPENDS:${PN} = " \
     expect \
     iperf3 \
     iptables \
+    python3-pip \
+    spidev-test \
     sudo \
     var-mii \
 "
