@@ -10,6 +10,7 @@ RDEPENDS:${PN} = " \
     iperf3 \
     iptables \
     python3-pip \
+    screen \
     spidev-test \
     sudo \
     var-mii \
