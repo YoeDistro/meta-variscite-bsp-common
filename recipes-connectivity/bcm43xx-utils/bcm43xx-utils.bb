@@ -13,14 +13,12 @@ FILES:${PN} = " \
 	${sysconfdir}/bluetooth/variscite-bt.d*  \
 "
 
-RDEPENDS:${PN} = "i2c-tools base-files libgpiod-tools var-gpio-utils var-wireless-utils usleep"
-
-S = "${WORKDIR}"
+RDEPENDS:${PN} = "i2c-tools udev-extraconf libgpiod-tools var-gpio-utils var-wireless-utils usleep"
 
 do_install() {
 	install -d ${D}${sysconfdir}/wifi/variscite-wifi.d
-	install -m 0755 ${WORKDIR}/bcm43xx-wifi ${D}/${sysconfdir}/wifi/variscite-wifi.d
+	install -m 0755 ${UNPACKDIR}/bcm43xx-wifi ${D}/${sysconfdir}/wifi/variscite-wifi.d
 
 	install -d ${D}${sysconfdir}/bluetooth/variscite-bt.d
-	install -m 0755 ${WORKDIR}/bcm43xx-bt ${D}/${sysconfdir}/bluetooth/variscite-bt.d
+	install -m 0755 ${UNPACKDIR}/bcm43xx-bt ${D}/${sysconfdir}/bluetooth/variscite-bt.d
 }
