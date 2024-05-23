@@ -9,7 +9,7 @@ RDEPENDS:${PN} = "libgpiod-tools"
 
 do_install() {
 	install -d ${D}${sysconfdir}
-	install -m 0644 ${WORKDIR}/gpiochip ${D}${sysconfdir}/gpiochip
+	install -m 0644 ${UNPACKDIR}/gpiochip ${D}${sysconfdir}/gpiochip
 }
 
 FILES:${PN} = "${sysconfdir}/gpiochip"
