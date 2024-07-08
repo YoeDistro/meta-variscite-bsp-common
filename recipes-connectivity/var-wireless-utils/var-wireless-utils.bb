@@ -51,8 +51,6 @@ do_install() {
  
 		ln -sf ${systemd_unitdir}/system/variscite-wifi.service \
 			${D}${sysconfdir}/systemd/system/multi-user.target.wants/variscite-wifi.service
-		ln -sf ${systemd_unitdir}/system/variscite-bt.service \
-			${D}${sysconfdir}/systemd/system/multi-user.target.wants/variscite-bt.service
 		ln -sf ${systemd_unitdir}/system/variscite-ot.service \
 			${D}${sysconfdir}/systemd/system/multi-user.target.wants/variscite-ot.service
 	else
