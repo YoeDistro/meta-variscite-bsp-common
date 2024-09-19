@@ -3,19 +3,20 @@
 # http://www.variscite.com
 
 LICENSE = "Apache-2.0"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
-S = "${WORKDIR}"
+SRC_URI = "git://github.com/varigit/brcm-patchram-plus.git;protocol=https;branch=main"
+SRCREV = "b40c8041a5bcfde9c3165e53e45fcf9130a45303"
 
-LIC_FILES_CHKSUM = "file://brcm_patchram_plus.c;md5=8730e07b5fe13575c21ef01769aa5b01"
-SRC_URI = "file://brcm_patchram_plus.c"
+S = "${WORKDIR}/git"
 
 do_compile() {
-        ${CC} ${CFLAGS} ${LDFLAGS} -o brcm_patchram_plus brcm_patchram_plus.c
+        oe_runmake
 }
 
 do_install() {
         install -d ${D}${bindir}/
-        install -m 0755 ${S}/brcm_patchram_plus ${D}${bindir}/
+        install -m 0755 ${B}/brcm_patchram_plus ${D}${bindir}/
 }
 
 FILES:${PN} = "${bindir}/brcm_patchram_plus"
