@@ -1,8 +1,45 @@
+/*
+*  Copyright (c) 2020, The OpenThread Authors.
+*  Copyright 2023-2024 NXP
+*  All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions are met:
+*  1. Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*  2. Redistributions in binary form must reproduce the above copyright
+*     notice, this list of conditions and the following disclaimer in the
+*     documentation and/or other materials provided with the distribution.
+*  3. Neither the name of the copyright holder nor the
+*     names of its contributors may be used to endorse or promote products
+*     derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+*  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+*  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+*  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+*  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+*  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+*  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+*  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*
+* Header for patch information.
+* Description           : Add Vendor specific commands for RF test mode (MFG commands).
+* Version               : v001
+* Mandatory/Optional    : Optional
+* Impact if not applied : RF test mode functionality won't be available.
+*/
+
 diff --git a/include/openthread/platform/radio.h b/include/openthread/platform/radio.h
-index 4e2198422..681f4fc3f 100644
+index c38df1a15..cb200d682 100644
 --- a/include/openthread/platform/radio.h
 +++ b/include/openthread/platform/radio.h
-@@ -1168,6 +1168,12 @@ otError otPlatRadioSetIeeeEui64(otInstance *aInstance, const otExtAddress *aIeee
+@@ -1300,6 +1300,12 @@ otError otPlatRadioSetIeeeEui64(otInstance *aInstance, const otExtAddress *aIeee
   */
  otError otPlatRadioSetTxPowerLimit(otInstance *aInstance, uint8_t txPowerLimit);
  
@@ -16,10 +53,10 @@ index 4e2198422..681f4fc3f 100644
  } // end of extern "C"
  #endif
 diff --git a/src/lib/spinel/radio_spinel.hpp b/src/lib/spinel/radio_spinel.hpp
-index c4ff31ffe..3cc5944aa 100644
+index e2c88d603..c8d6ae111 100644
 --- a/src/lib/spinel/radio_spinel.hpp
 +++ b/src/lib/spinel/radio_spinel.hpp
-@@ -199,6 +199,13 @@ public:
+@@ -195,6 +195,13 @@ public:
       */
      otError SetTxPowerLimit(uint8_t txPowerLimit);
  
@@ -31,20 +68,20 @@ index c4ff31ffe..3cc5944aa 100644
 +    otError MfgCmd(uint8_t *payload, const uint8_t payloadLenIn, uint8_t &payloadLenOut);
 +
      /**
-      * This method sets the Extended Address for address filtering.
+      * Sets the Extended Address for address filtering.
       *
 diff --git a/src/lib/spinel/radio_spinel_impl.hpp b/src/lib/spinel/radio_spinel_impl.hpp
-index ad6f43cb3..fbbdeb8f2 100644
+index 9d5b29140..a66ba33e6 100644
 --- a/src/lib/spinel/radio_spinel_impl.hpp
 +++ b/src/lib/spinel/radio_spinel_impl.hpp
-@@ -1243,6 +1243,21 @@ exit:
+@@ -1067,6 +1067,21 @@ exit:
      return error;
  }
  
 +#define MAXBUFFERSIZE 16
 +
-+template <typename InterfaceType, typename ProcessContextType>
-+otError RadioSpinel<InterfaceType, ProcessContextType>::MfgCmd(uint8_t *payload, const uint8_t payloadLenIn, uint8_t &payloadLenOut)
++template <typename InterfaceType>
++otError RadioSpinel<InterfaceType>::MfgCmd(uint8_t *payload, const uint8_t payloadLenIn, uint8_t &payloadLenOut)
 +{
 +    otError error;
 +    uint8_t buffer[MAXBUFFERSIZE]; //temporary buffer used to be passed as arg of GetWithParam
@@ -56,14 +93,14 @@ index ad6f43cb3..fbbdeb8f2 100644
 +    return error;
 +}
 +
- template <typename InterfaceType, typename ProcessContextType>
- otError RadioSpinel<InterfaceType, ProcessContextType>::SetExtendedAddress(const otExtAddress &aExtAddress)
+ template <typename InterfaceType>
+ otError RadioSpinel<InterfaceType>::SetExtendedAddress(const otExtAddress &aExtAddress)
  {
 diff --git a/src/lib/spinel/spinel.h b/src/lib/spinel/spinel.h
-index 45a3bb539..a5cdc040a 100644
+index 7ceae572d..92455218b 100644
 --- a/src/lib/spinel/spinel.h
 +++ b/src/lib/spinel/spinel.h
-@@ -4814,6 +4814,7 @@ enum
+@@ -4871,6 +4871,7 @@ enum
      SPINEL_PROP_VENDOR_NXP_IR_CMD        = (SPINEL_PROP_VENDOR__BEGIN + 0x101),
      SPINEL_PROP_VENDOR_NXP_SET_EUI64_CMD = (SPINEL_PROP_VENDOR__BEGIN + 0x10A),
      SPINEL_PROP_VENDOR_NXP_SET_TXPOWERLIMIT_CMD = (SPINEL_PROP_VENDOR__BEGIN + 0x10B),
@@ -72,7 +109,7 @@ index 45a3bb539..a5cdc040a 100644
      SPINEL_PROP_VENDOR__END   = 0x4000,
  
 diff --git a/src/posix/main.c b/src/posix/main.c
-index 802a053a3..e2a409426 100644
+index 3ad3ddf45..5e41a2aa3 100644
 --- a/src/posix/main.c
 +++ b/src/posix/main.c
 @@ -70,6 +70,28 @@
@@ -102,9 +139,9 @@ index 802a053a3..e2a409426 100644
 +uint8_t mfgEnable = 0;
 +
  /**
-  * This function initializes NCP app.
+  * Initializes NCP app.
   *
-@@ -463,7 +485,7 @@ static otError ProcessSetTxPowerLimit(void *aContext, uint8_t aArgsLength, char
+@@ -464,7 +486,7 @@ static otError ProcessSetTxPowerLimit(void *aContext, uint8_t aArgsLength, char
      if( aArgsLength == 1 )
      {
          uint8_t txPowerLimit = (uint8_t)atoi(aArgs[0]);
@@ -113,7 +150,7 @@ index 802a053a3..e2a409426 100644
              syslog(LOG_INFO, "-> txPowerLimit : %d", txPowerLimit);
          }else{
              syslog(LOG_INFO, "-> txPowerLimit : default value");
-@@ -480,6 +502,336 @@ static otError ProcessSetTxPowerLimit(void *aContext, uint8_t aArgsLength, char
+@@ -481,6 +503,336 @@ static otError ProcessSetTxPowerLimit(void *aContext, uint8_t aArgsLength, char
      return error;
  }
  
@@ -450,7 +487,7 @@ index 802a053a3..e2a409426 100644
  static const otCliCommand kCommands[] = {
  #if !OPENTHREAD_POSIX_CONFIG_DAEMON_ENABLE
      {"exit", ProcessExit},
-@@ -489,6 +841,7 @@ static const otCliCommand kCommands[] = {
+@@ -490,6 +842,7 @@ static const otCliCommand kCommands[] = {
      {"ircmd", ProcessIRCmd},       //=> InBand Independent Reset command
      {"seteui64", ProcessSetEui64}, //=> Set ieee.802.15.4 MAC Address
      {"txpwrlimit", ProcessSetTxPowerLimit}, //=> Set TX power limit for 15.4
@@ -459,10 +496,10 @@ index 802a053a3..e2a409426 100644
  
  int main(int argc, char *argv[])
 diff --git a/src/posix/platform/radio.cpp b/src/posix/platform/radio.cpp
-index 5dc6e24e7..2aee0cd9c 100644
+index f121300ec..98c129308 100644
 --- a/src/posix/platform/radio.cpp
 +++ b/src/posix/platform/radio.cpp
-@@ -765,6 +765,12 @@ otError otPlatRadioSetTxPowerLimit(otInstance *aInstance, uint8_t txPowerLimit)
+@@ -935,6 +935,12 @@ otError otPlatRadioSetTxPowerLimit(otInstance *aInstance, uint8_t txPowerLimit)
      return sRadioSpinel.SetTxPowerLimit(txPowerLimit);
  }
  

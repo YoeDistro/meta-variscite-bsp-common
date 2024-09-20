@@ -29,32 +29,21 @@
 
 /*
 * Header for patch information.
-* Description           : Fix a race condition in ot-host when SPI_INT GPIO changes between
-*                         CheckInterrupt() and FD_SET.
+* Description           : Restore default TX power upon factory reset.
 * Version               : v001
-* Mandatory/Optional    : Mandatory
-* Impact if not applied : SPI transaction requested by the RCP will occasionally be significantly delayed.
+* Mandatory/Optional    : Optional
+* Impact if not applied : Previously configured TX power level remains after factory reset command.
 */
 
-diff --git a/src/posix/platform/spi_interface.cpp b/src/posix/platform/spi_interface.cpp
-index 844e28afb..d8c5611b3 100644
---- a/src/posix/platform/spi_interface.cpp
-+++ b/src/posix/platform/spi_interface.cpp
-@@ -663,6 +663,17 @@ void SpiInterface::UpdateFdSet(void *aMainloopContext)
-             // The interrupt pin was not asserted, so we wait for the interrupt pin to be asserted by adding it to the
-             // read set.
-             FD_SET(mIntGpioValueFd, &context->mReadFdSet);
-+
-+            if (CheckInterrupt())
-+            {
-+                // Interrupt pin was not asserted before FD_SET
-+                // but it is after.
-+                // set the timeout to zero else the select will not detect the falling edge
-+                // and will wait until the end of the timeout
-+                timeout.tv_sec  = 0;
-+                timeout.tv_usec = 0;
-+                otLogDebgPlat("UpdateFdSet(): Interrupt after FD_SET.");
-+            }
-         }
-     }
-     else if (timercmp(&pollingTimeout, &timeout, <))
+diff --git a/src/core/common/instance.cpp b/src/core/common/instance.cpp
+index 10d545d66..3f1774788 100644
+--- a/src/core/common/instance.cpp
++++ b/src/core/common/instance.cpp
+@@ -381,6 +381,7 @@ void Instance::FactoryReset(void)
+     Get<KeyManager>().DestroyTemporaryKeys();
+     Get<KeyManager>().DestroyPersistentKeys();
+ #endif
++    otPlatRadioSetTransmitPower(this,0);
+     otPlatReset(this);
+ }
+ 

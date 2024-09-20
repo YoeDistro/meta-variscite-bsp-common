@@ -1,8 +1,46 @@
+/*
+*  Copyright (c) 2020, The OpenThread Authors.
+*  Copyright 2023-2024 NXP
+*  All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions are met:
+*  1. Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*  2. Redistributions in binary form must reproduce the above copyright
+*     notice, this list of conditions and the following disclaimer in the
+*     documentation and/or other materials provided with the distribution.
+*  3. Neither the name of the copyright holder nor the
+*     names of its contributors may be used to endorse or promote products
+*     derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+*  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+*  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+*  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+*  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+*  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+*  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+*  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*
+* Header for patch information.
+* Description           : Add Vendor specific commands for the Independent Reset &
+*                         the set EUI-64 MAC address features.
+* Version               : v001
+* Mandatory/Optional    : Optional
+* Impact if not applied : Independant Reset and Set EUI-64 functionalities won't be available.
+*/
+
 diff --git a/include/openthread/platform/radio.h b/include/openthread/platform/radio.h
-index a4b916bba..78f6f3182 100644
+index bb7ef0c3d..4ca02ddb5 100644
 --- a/include/openthread/platform/radio.h
 +++ b/include/openthread/platform/radio.h
-@@ -1148,11 +1148,19 @@ otError otPlatRadioConfigureEnhAckProbing(otInstance         *aInstance,
+@@ -1280,11 +1280,19 @@ extern otError otPlatRadioGetRawPowerSetting(otInstance *aInstance,
   * @}
   *
   */
@@ -23,10 +61,10 @@ index a4b916bba..78f6f3182 100644
  #ifdef __cplusplus
  } // end of extern "C"
 diff --git a/src/lib/spinel/radio_spinel.hpp b/src/lib/spinel/radio_spinel.hpp
-index 4fd53b9f8..859672cfd 100644
+index 7c32dbe07..a23c51194 100644
 --- a/src/lib/spinel/radio_spinel.hpp
 +++ b/src/lib/spinel/radio_spinel.hpp
-@@ -175,6 +175,18 @@ public:
+@@ -171,6 +171,18 @@ public:
       */
      otError GetIeeeEui64(uint8_t *aIeeeEui64);
  
@@ -43,18 +81,18 @@ index 4fd53b9f8..859672cfd 100644
 +    otError SetIeeeEui64(const otExtAddress &aIeeeEui64);
 +
      /**
-      * This method sets the Extended Address for address filtering.
+      * Sets the Extended Address for address filtering.
       *
 diff --git a/src/lib/spinel/radio_spinel_impl.hpp b/src/lib/spinel/radio_spinel_impl.hpp
-index 5b5fba9bb..ac3df87d6 100644
+index 399002201..ad3de1df8 100644
 --- a/src/lib/spinel/radio_spinel_impl.hpp
 +++ b/src/lib/spinel/radio_spinel_impl.hpp
-@@ -1216,6 +1216,23 @@ otError RadioSpinel<InterfaceType, ProcessContextType>::GetIeeeEui64(uint8_t *aI
+@@ -1040,6 +1040,23 @@ template <typename InterfaceType> otError RadioSpinel<InterfaceType>::GetIeeeEui
      return OT_ERROR_NONE;
  }
  
-+template <typename InterfaceType, typename ProcessContextType>
-+otError RadioSpinel<InterfaceType, ProcessContextType>::SetIeeeEui64(const otExtAddress &aIeeeEui64)
++template <typename InterfaceType>
++otError RadioSpinel<InterfaceType>::SetIeeeEui64(const otExtAddress &aIeeeEui64)
 +{
 +    otExtAddress addr;
 +    otError      error;
@@ -70,14 +108,14 @@ index 5b5fba9bb..ac3df87d6 100644
 +    return error;
 +}
 +
- template <typename InterfaceType, typename ProcessContextType>
- otError RadioSpinel<InterfaceType, ProcessContextType>::SetExtendedAddress(const otExtAddress &aExtAddress)
+ template <typename InterfaceType>
+ otError RadioSpinel<InterfaceType>::SetExtendedAddress(const otExtAddress &aExtAddress)
  {
 diff --git a/src/lib/spinel/spinel.h b/src/lib/spinel/spinel.h
-index 2e70e7da8..22398d3bc 100644
+index c251eb1db..a13bacdd5 100644
 --- a/src/lib/spinel/spinel.h
 +++ b/src/lib/spinel/spinel.h
-@@ -4809,6 +4809,11 @@ enum
+@@ -4866,6 +4866,11 @@ enum
      SPINEL_PROP_NEST__END = 0x3C00,
  
      SPINEL_PROP_VENDOR__BEGIN = 0x3C00,
@@ -90,10 +128,10 @@ index 2e70e7da8..22398d3bc 100644
  
      SPINEL_PROP_VENDOR_ESP__BEGIN = (SPINEL_PROP_VENDOR__BEGIN + 0),
 diff --git a/src/posix/main.c b/src/posix/main.c
-index 9b81e2d0f..0ac11e71c 100644
+index 0f989dfb5..4656acee4 100644
 --- a/src/posix/main.c
 +++ b/src/posix/main.c
-@@ -351,11 +351,116 @@ static otError ProcessExit(void *aContext, uint8_t aArgsLength, char *aArgs[])
+@@ -352,11 +352,116 @@ static otError ProcessExit(void *aContext, uint8_t aArgsLength, char *aArgs[])
  }
  #endif
  
@@ -211,10 +249,10 @@ index 9b81e2d0f..0ac11e71c 100644
  
  int main(int argc, char *argv[])
 diff --git a/src/posix/platform/radio.cpp b/src/posix/platform/radio.cpp
-index 3620879ba..a295bf8e5 100644
+index c9d613395..6d133c252 100644
 --- a/src/posix/platform/radio.cpp
 +++ b/src/posix/platform/radio.cpp
-@@ -734,6 +734,31 @@ otError otPlatRadioReceiveAt(otInstance *aInstance, uint8_t aChannel, uint32_t a
+@@ -904,6 +904,31 @@ otError otPlatRadioReceiveAt(otInstance *aInstance, uint8_t aChannel, uint32_t a
      return OT_ERROR_NOT_IMPLEMENTED;
  }
  

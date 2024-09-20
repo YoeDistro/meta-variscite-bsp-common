@@ -1,8 +1,45 @@
+/*
+*  Copyright (c) 2020, The OpenThread Authors.
+*  Copyright 2023-2024 NXP
+*  All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions are met:
+*  1. Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*  2. Redistributions in binary form must reproduce the above copyright
+*     notice, this list of conditions and the following disclaimer in the
+*     documentation and/or other materials provided with the distribution.
+*  3. Neither the name of the copyright holder nor the
+*     names of its contributors may be used to endorse or promote products
+*     derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+*  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+*  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+*  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+*  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+*  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+*  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+*  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*
+* Header for patch information.
+* Description           : Add Vendor specific commands for Reading the FW version.
+* Version               : v001
+* Mandatory/Optional    : Optional
+* Impact if not applied : Not possible to read the FW version. Lower debug capabilities.
+*/
+
 diff --git a/include/openthread/platform/radio.h b/include/openthread/platform/radio.h
-index 9444d1d44..ba3d406ca 100644
+index 1941a9047..c1ed877d8 100644
 --- a/include/openthread/platform/radio.h
 +++ b/include/openthread/platform/radio.h
-@@ -1196,6 +1196,12 @@ otError otPlatRadioMfgCommand(otInstance *aInstance, uint8_t *payload, const uin
+@@ -1328,6 +1328,12 @@ otError otPlatRadioMfgCommand(otInstance *aInstance, uint8_t *payload, const uin
   */
  otError otPlatRadioCcaConfigValue(otInstance *aInstance, otCCAModeConfig *aCcaConfig, uint8_t aSetValue);
  
@@ -16,10 +53,10 @@ index 9444d1d44..ba3d406ca 100644
  } // end of extern "C"
  #endif
 diff --git a/src/lib/spinel/radio_spinel.hpp b/src/lib/spinel/radio_spinel.hpp
-index 52721efcc..b01fdd542 100644
+index 0d34293f3..3fe0fe98f 100644
 --- a/src/lib/spinel/radio_spinel.hpp
 +++ b/src/lib/spinel/radio_spinel.hpp
-@@ -227,6 +227,15 @@ public:
+@@ -223,6 +223,15 @@ public:
       */
      otError CcaConfigValue(otCCAModeConfig &aCcaConfig, uint8_t aSetValue);
  
@@ -33,32 +70,31 @@ index 52721efcc..b01fdd542 100644
 +    otError GetFwVersion(const char *fwVersion, uint8_t fwVersionLen);
 +
      /**
-      * This method sets the Extended Address for address filtering.
+      * Sets the Extended Address for address filtering.
       *
 diff --git a/src/lib/spinel/radio_spinel_impl.hpp b/src/lib/spinel/radio_spinel_impl.hpp
-index b2fbe9fb8..957fdbfb2 100644
+index ef3745442..9b3e339af 100644
 --- a/src/lib/spinel/radio_spinel_impl.hpp
 +++ b/src/lib/spinel/radio_spinel_impl.hpp
-@@ -1290,6 +1290,14 @@ otError RadioSpinel<InterfaceType, ProcessContextType>::CcaConfigValue(otCCAMode
- 
+@@ -1115,6 +1115,13 @@ otError RadioSpinel<InterfaceType>::CcaConfigValue(otCCAModeConfig &aCcaConfig,
      return error;
  }
-+
-+template <typename InterfaceType, typename ProcessContextType>
-+otError RadioSpinel<InterfaceType, ProcessContextType>::GetFwVersion(const char *fwVersion, uint8_t fwVersionLen)
+ 
++template <typename InterfaceType>
++otError RadioSpinel<InterfaceType>::GetFwVersion(const char *fwVersion, uint8_t fwVersionLen)
 +{
 +    otError error = Get(SPINEL_PROP_VENDOR_NXP_GET_FW_VERSION_CMD, SPINEL_DATATYPE_UTF8_S, fwVersion, fwVersionLen);
 +    return error;
 +}
 +
- template <typename InterfaceType, typename ProcessContextType>
- otError RadioSpinel<InterfaceType, ProcessContextType>::SetExtendedAddress(const otExtAddress &aExtAddress)
+ template <typename InterfaceType>
+ otError RadioSpinel<InterfaceType>::SetExtendedAddress(const otExtAddress &aExtAddress)
  {
 diff --git a/src/lib/spinel/spinel.h b/src/lib/spinel/spinel.h
-index 34d66db92..fc3908791 100644
+index 0bcf14dda..ef4ca67f9 100644
 --- a/src/lib/spinel/spinel.h
 +++ b/src/lib/spinel/spinel.h
-@@ -4815,6 +4815,7 @@ enum
+@@ -4872,6 +4872,7 @@ enum
      SPINEL_PROP_VENDOR_NXP_SET_EUI64_CMD = (SPINEL_PROP_VENDOR__BEGIN + 0x10A),
      SPINEL_PROP_VENDOR_NXP_GET_SET_TXPOWERLIMIT_CMD = (SPINEL_PROP_VENDOR__BEGIN + 0x10B),
      SPINEL_PROP_VENDOR_NXP_GET_SET_CCA_CONFIGURE_CMD = (SPINEL_PROP_VENDOR__BEGIN + 0x10C),
@@ -67,7 +103,7 @@ index 34d66db92..fc3908791 100644
  
      SPINEL_PROP_VENDOR__END   = 0x4000,
 diff --git a/src/posix/main.c b/src/posix/main.c
-index 16f13b8bb..a0bbb7352 100644
+index 2ba435dcd..988e0d58e 100644
 --- a/src/posix/main.c
 +++ b/src/posix/main.c
 @@ -76,6 +76,7 @@ extern otError ProcessSetEui64(void *aContext, uint8_t aArgsLength, char *aArgs[
@@ -77,8 +113,8 @@ index 16f13b8bb..a0bbb7352 100644
 +extern otError ProcessGetFwVersion(void *aContext, uint8_t aArgsLength, char *aArgs[]);
  
  /**
-  * This function initializes NCP app.
-@@ -368,7 +369,8 @@ static const otCliCommand kCommands[] = {
+  * Initializes NCP app.
+@@ -369,7 +370,8 @@ static const otCliCommand kCommands[] = {
      {"seteui64", ProcessSetEui64}, //=> Set ieee.802.15.4 MAC Address
      {"txpwrlimit", ProcessGetSetTxPowerLimit}, //=> Set TX power limit for 15.4
      {"mfgcmd", ProcessMfgCommands}, //=> Generic VSC for MFG RF commands
@@ -89,10 +125,10 @@ index 16f13b8bb..a0bbb7352 100644
  
  int main(int argc, char *argv[])
 diff --git a/src/posix/platform/daemon.cpp b/src/posix/platform/daemon.cpp
-index fa13ccdf6..acc02469e 100644
+index db48669c4..011e53057 100644
 --- a/src/posix/platform/daemon.cpp
 +++ b/src/posix/platform/daemon.cpp
-@@ -94,6 +94,8 @@ extern "C"
+@@ -95,6 +95,8 @@ extern "C"
  #define MFG_CMD_PHY_RX_TX_ACK_TEST 0x3A   //58
  #define MFG_CMD_SET_GENERIC_PARAM 0x3B    //59
  
@@ -101,7 +137,7 @@ index fa13ccdf6..acc02469e 100644
  static uint8_t mfgEnable = 0;
  
  // 15.4_INDEPENDENT_RESET
-@@ -610,13 +612,31 @@ otError ProcessGetSetCcaCfg(void *aContext, uint8_t aArgsLength, char *aArgs[])
+@@ -611,13 +613,31 @@ otError ProcessGetSetCcaCfg(void *aContext, uint8_t aArgsLength, char *aArgs[])
      return OT_ERROR_NONE;
  }
  
@@ -135,10 +171,10 @@ index fa13ccdf6..acc02469e 100644
  } //extern "C"
  
 diff --git a/src/posix/platform/radio.cpp b/src/posix/platform/radio.cpp
-index 81fc2d129..f847cf26d 100644
+index 6829ec857..cc3b326f4 100644
 --- a/src/posix/platform/radio.cpp
 +++ b/src/posix/platform/radio.cpp
-@@ -783,6 +783,12 @@ otError otPlatRadioCcaConfigValue(otInstance *aInstance, otCCAModeConfig *aOtCCA
+@@ -953,6 +953,12 @@ otError otPlatRadioCcaConfigValue(otInstance *aInstance, otCCAModeConfig *aOtCCA
      return sRadioSpinel.CcaConfigValue(*aOtCCAModeConfig, aSetValue);
  }
  

@@ -29,32 +29,22 @@
 
 /*
 * Header for patch information.
-* Description           : Fix a race condition in ot-host when SPI_INT GPIO changes between
-*                         CheckInterrupt() and FD_SET.
+* Description           : Remove duplicated error message for vendor specific RF test mode commands.
 * Version               : v001
-* Mandatory/Optional    : Mandatory
-* Impact if not applied : SPI transaction requested by the RCP will occasionally be significantly delayed.
+* Mandatory/Optional    : Optional
+* Impact if not applied : Duplicated error message might be displayed when using RF test mode commands.
 */
 
-diff --git a/src/posix/platform/spi_interface.cpp b/src/posix/platform/spi_interface.cpp
-index 844e28afb..d8c5611b3 100644
---- a/src/posix/platform/spi_interface.cpp
-+++ b/src/posix/platform/spi_interface.cpp
-@@ -663,6 +663,17 @@ void SpiInterface::UpdateFdSet(void *aMainloopContext)
-             // The interrupt pin was not asserted, so we wait for the interrupt pin to be asserted by adding it to the
-             // read set.
-             FD_SET(mIntGpioValueFd, &context->mReadFdSet);
-+
-+            if (CheckInterrupt())
-+            {
-+                // Interrupt pin was not asserted before FD_SET
-+                // but it is after.
-+                // set the timeout to zero else the select will not detect the falling edge
-+                // and will wait until the end of the timeout
-+                timeout.tv_sec  = 0;
-+                timeout.tv_usec = 0;
-+                otLogDebgPlat("UpdateFdSet(): Interrupt after FD_SET.");
-+            }
-         }
+diff --git a/src/posix/platform/daemon.cpp b/src/posix/platform/daemon.cpp
+index 7aa98c840..7b878ef3d 100644
+--- a/src/posix/platform/daemon.cpp
++++ b/src/posix/platform/daemon.cpp
+@@ -557,7 +557,7 @@ otError ProcessMfgCommands(void *aContext, uint8_t aArgsLength, char *aArgs[])
+     else if(error == OT_ERROR_INVALID_ARGS)
+     {
+         //syslog(LOG_INFO, "MFG command Invalid parameter");
+-        otCliOutputFormat("INVALID PARAMETER\r\n");
++        //otCliOutputFormat("INVALID PARAMETER\r\n");
      }
-     else if (timercmp(&pollingTimeout, &timeout, <))
+     else if(error == OT_ERROR_NOT_IMPLEMENTED)
+     {

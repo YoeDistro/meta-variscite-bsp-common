@@ -1,5 +1,43 @@
+/*
+*  Copyright (c) 2020, The OpenThread Authors.
+*  Copyright 2023-2024 NXP
+*  All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions are met:
+*  1. Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*  2. Redistributions in binary form must reproduce the above copyright
+*     notice, this list of conditions and the following disclaimer in the
+*     documentation and/or other materials provided with the distribution.
+*  3. Neither the name of the copyright holder nor the
+*     names of its contributors may be used to endorse or promote products
+*     derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+*  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+*  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+*  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+*  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+*  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+*  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+*  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*
+* Header for patch information.
+* Description           : Add Vendor specific commands for OTBR. This patch shall not applied for ot-daemon.
+* Version               : v001
+* Mandatory/Optional    : Optional
+* Impact if not applied : Independant Reset, Set EUI-64, TX power limit and RF test mode functionalities
+*                         won't be available.
+*/
+
 diff --git a/src/posix/main.c b/src/posix/main.c
-index bea4cf4a5..4c0944e12 100644
+index 8ea016903..4bd7c8630 100644
 --- a/src/posix/main.c
 +++ b/src/posix/main.c
 @@ -70,27 +70,11 @@
@@ -34,8 +72,8 @@ index bea4cf4a5..4c0944e12 100644
 +extern otError ProcessMfgCommands(void *aContext, uint8_t aArgsLength, char *aArgs[]);
  
  /**
-  * This function initializes NCP app.
-@@ -373,476 +357,6 @@ static otError ProcessExit(void *aContext, uint8_t aArgsLength, char *aArgs[])
+  * Initializes NCP app.
+@@ -374,476 +358,6 @@ static otError ProcessExit(void *aContext, uint8_t aArgsLength, char *aArgs[])
  }
  #endif
  
@@ -513,10 +551,10 @@ index bea4cf4a5..4c0944e12 100644
  #if !OPENTHREAD_POSIX_CONFIG_DAEMON_ENABLE
      {"exit", ProcessExit},
 diff --git a/src/posix/platform/daemon.cpp b/src/posix/platform/daemon.cpp
-index acf897eb0..8c97a844b 100644
+index bb7b0d2dd..c1cc7079e 100644
 --- a/src/posix/platform/daemon.cpp
 +++ b/src/posix/platform/daemon.cpp
-@@ -71,6 +71,509 @@ void GetFilename(Filename &aFilename, const char *aPattern)
+@@ -72,6 +72,509 @@ void GetFilename(Filename &aFilename, const char *aPattern)
  
  } // namespace
  
@@ -1026,7 +1064,7 @@ index acf897eb0..8c97a844b 100644
  int Daemon::OutputFormatV(const char *aFormat, va_list aArguments)
  {
      char buf[OPENTHREAD_CONFIG_CLI_MAX_LINE_LENGTH + 1];
-@@ -243,6 +746,8 @@ void Daemon::SetUp(void)
+@@ -244,6 +747,8 @@ void Daemon::SetUp(void)
          },
          this);
  

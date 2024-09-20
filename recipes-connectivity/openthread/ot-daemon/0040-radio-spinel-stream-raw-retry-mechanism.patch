@@ -29,32 +29,37 @@
 
 /*
 * Header for patch information.
-* Description           : Fix a race condition in ot-host when SPI_INT GPIO changes between
-*                         CheckInterrupt() and FD_SET.
+* Description           : Retry mechanism if mTxRadioTid is expected and current command failed
+*                         with OT_ERROR_BUSY.
 * Version               : v001
 * Mandatory/Optional    : Mandatory
-* Impact if not applied : SPI transaction requested by the RCP will occasionally be significantly delayed.
+* Impact if not applied : Under corner scenario, OT host SW may crash.
 */
 
-diff --git a/src/posix/platform/spi_interface.cpp b/src/posix/platform/spi_interface.cpp
-index 844e28afb..d8c5611b3 100644
---- a/src/posix/platform/spi_interface.cpp
-+++ b/src/posix/platform/spi_interface.cpp
-@@ -663,6 +663,17 @@ void SpiInterface::UpdateFdSet(void *aMainloopContext)
-             // The interrupt pin was not asserted, so we wait for the interrupt pin to be asserted by adding it to the
-             // read set.
-             FD_SET(mIntGpioValueFd, &context->mReadFdSet);
+diff --git a/src/lib/spinel/radio_spinel_impl.hpp b/src/lib/spinel/radio_spinel_impl.hpp
+index 4f0a7a5b2..3b3948a19 100644
+--- a/src/lib/spinel/radio_spinel_impl.hpp
++++ b/src/lib/spinel/radio_spinel_impl.hpp
+@@ -1684,6 +1684,19 @@ otError RadioSpinel<InterfaceType>::RequestV(uint32_t          command,
+     VerifyOrExit(tid > 0, error = OT_ERROR_BUSY);
+ 
+     error = SendCommand(command, aKey, tid, aFormat, aArgs);
 +
-+            if (CheckInterrupt())
-+            {
-+                // Interrupt pin was not asserted before FD_SET
-+                // but it is after.
-+                // set the timeout to zero else the select will not detect the falling edge
-+                // and will wait until the end of the timeout
-+                timeout.tv_sec  = 0;
-+                timeout.tv_usec = 0;
-+                otLogDebgPlat("UpdateFdSet(): Interrupt after FD_SET.");
-+            }
-         }
-     }
-     else if (timercmp(&pollingTimeout, &timeout, <))
++    if( mTxRadioTid && (error == OT_ERROR_BUSY) )
++    {
++        // Handle RETRY mechanism in case of VALUE_SET / STREAM_RAW failed transaction
++        error = WaitResponse();
++
++        if( error == OT_ERROR_NONE )
++        {
++            // Call again the current command. SPI interface shall be available now !
++            error = SendCommand(command, aKey, tid, aFormat, aArgs);
++        }
++    }
++
+     SuccessOrExit(error);
+ 
+     if (aKey == SPINEL_PROP_STREAM_RAW)
+-- 
+2.25.1
+
