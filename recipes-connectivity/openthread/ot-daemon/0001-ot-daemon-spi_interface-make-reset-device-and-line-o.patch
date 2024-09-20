@@ -20,15 +20,16 @@ optional.
 Upstream-status: Innapropriate [Variscite Specific]
 
 Signed-off-by: Nate Drude <nate.d@variscite.com>
+Signed-off-by: FrancescoFerraro <francesco.f@variscite.com>
 ---
- src/posix/platform/spi_interface.cpp | 18 +++++++++++++++---
- 1 file changed, 15 insertions(+), 3 deletions(-)
+ src/posix/platform/spi_interface.cpp | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
 
 diff --git a/src/posix/platform/spi_interface.cpp b/src/posix/platform/spi_interface.cpp
-index 26758ff63..d38015b56 100644
+index 19d7e6958..91b94907b 100644
 --- a/src/posix/platform/spi_interface.cpp
 +++ b/src/posix/platform/spi_interface.cpp
-@@ -118,7 +118,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
+@@ -125,7 +125,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
  
      spiGpioIntDevice   = aRadioUrl.GetValue("gpio-int-device");
      spiGpioResetDevice = aRadioUrl.GetValue("gpio-reset-device");
@@ -37,7 +38,7 @@ index 26758ff63..d38015b56 100644
      {
          DieNow(OT_EXIT_INVALID_ARGUMENTS);
      }
-@@ -137,7 +137,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
+@@ -144,7 +144,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
      }
      else
      {
@@ -46,7 +47,7 @@ index 26758ff63..d38015b56 100644
      }
      if ((value = aRadioUrl.GetValue("spi-mode")))
      {
-@@ -181,7 +181,14 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
+@@ -188,7 +188,13 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
          otLogNotePlat("SPI interface enters polling mode.");
      }
  
@@ -58,11 +59,10 @@ index 26758ff63..d38015b56 100644
 +    {
 +        syslog(LOG_INFO, "Note: No gpio-reset-device provided");
 +    }
-+
      InitSpiDev(aRadioUrl.GetPath(), spiMode, spiSpeed);
  
-     // Reset RCP chip.
-@@ -331,6 +338,11 @@ exit:
+     return OT_ERROR_NONE;
+@@ -332,6 +338,11 @@ exit:
  
  void SpiInterface::TriggerReset(void)
  {
@@ -74,3 +74,6 @@ index 26758ff63..d38015b56 100644
      // Set Reset pin to low level.
      SetGpioValue(mResetGpioValueFd, 0);
  
+-- 
+2.46.1
+
