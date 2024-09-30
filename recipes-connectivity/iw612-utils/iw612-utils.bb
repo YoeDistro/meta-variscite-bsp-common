@@ -11,9 +11,6 @@ SRC_URI = " \
 	file://var_wifi_mod_para.conf \
 "
 
-PACKAGECONFIG ??= "networkmanager"
-PACKAGECONFIG[networkmanager] = "--with-networkmanager,--without-networkmanager"
-
 FILES:${PN} = " \
 	${sysconfdir}/bluetooth/variscite-bt.d*  \
 	${sysconfdir}/openthread/variscite-ot.d*  \
@@ -43,7 +40,7 @@ do_install() {
 	install -d ${D}${sysconfdir}/wifi/variscite-wifi.d
 	install -m 0755 ${WORKDIR}/iw612-wifi ${D}/${sysconfdir}/wifi/variscite-wifi.d
 
-	if [ "${@bb.utils.contains('PACKAGECONFIG', 'networkmanager', 'yes', 'no', d)}" = "yes" ]; then
+	if [ "${@bb.utils.contains('PREFERRED_CONNECTIVITY_MANAGER', 'networkmanager', 'yes', 'no', d)}" = "yes" ]; then
 		install -d ${D}/${sysconfdir}/NetworkManager/conf.d
 		install -m 0644 ${WORKDIR}/99-iw61x-unmanaged-devices.conf ${D}/${sysconfdir}/NetworkManager/conf.d
 	fi
