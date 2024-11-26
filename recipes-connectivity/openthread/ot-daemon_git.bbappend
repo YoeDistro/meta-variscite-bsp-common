@@ -113,13 +113,3 @@ EXTRA_OECMAKE:append = " \
     -DOT_THREAD_VERSION=1.3 \
     -DOT_CHANNEL_MONITOR=0 \
 "
-
-do_install:append() {
-    install -d -m 755 ${D}${bindir}
-    echo "Renaming ${D}${sbindir}/ot-daemon into ${D}${bindir}/ot-daemon${BIN_NAME_PATTERN}"
-    mv ${D}${sbindir}/ot-daemon ${D}${bindir}/ot-daemon${BIN_NAME_PATTERN}
-    echo "Renaming ${D}${bindir}/ot-ctl into ${D}${bindir}/ot-client${BIN_NAME_PATTERN}"
-    mv ${D}${bindir}/ot-ctl ${D}${bindir}/ot-client${BIN_NAME_PATTERN}
-    install -d -m 755 ${D}${sbindir}
-    rm -rf ${D}${sbindir}
-}
