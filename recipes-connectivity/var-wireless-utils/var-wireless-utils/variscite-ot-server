@@ -13,11 +13,13 @@ check_daemon() {
 start_thread() {
     # Reset to factory defaults, set the configuration, and then bring the interface up
     ot-ctl -I "${IF_NAME}" factoryreset > /dev/null 2>&1 && sleep 2
-    ot-ctl -I "${IF_NAME}" channel 26 > /dev/null 2>&1
-    ot-ctl -I "${IF_NAME}" panid 0x1234 > /dev/null 2>&1
-    ot-ctl -I "${IF_NAME}" extpanid dead00beef00cafe > /dev/null 2>&1
-    KEY="$(ot-ctl -I "${IF_NAME}" networkkey | head -1 | tr -d '\r')"
-    ot-ctl -I "${IF_NAME}" networkname ThreadTest > /dev/null 2>&1
+    ot-ctl -I "${IF_NAME}" dataset init new > /dev/null 2>&1
+    ot-ctl -I "${IF_NAME}" dataset channel 26 > /dev/null 2>&1
+    ot-ctl -I "${IF_NAME}" dataset panid 0x1234 > /dev/null 2>&1
+    ot-ctl -I "${IF_NAME}" dataset extpanid dead00beef00cafe > /dev/null 2>&1
+    KEY="$(ot-ctl -I "${IF_NAME}" dataset networkkey | head -1 | tr -d '\r')"
+    ot-ctl -I "${IF_NAME}" dataset networkname ThreadTest > /dev/null 2>&1
+    ot-ctl -I "${IF_NAME}" dataset commit active > /dev/null 2>&1
     ot-ctl -I "${IF_NAME}" ifconfig up > /dev/null 2>&1
     ot-ctl -I "${IF_NAME}" thread start > /dev/null 2>&1
 
