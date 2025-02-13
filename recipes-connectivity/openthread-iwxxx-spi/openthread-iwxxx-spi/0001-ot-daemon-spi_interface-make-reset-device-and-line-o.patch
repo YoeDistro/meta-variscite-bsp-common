@@ -21,34 +21,33 @@ Upstream-status: Innapropriate [Variscite Specific]
 
 Signed-off-by: Nate Drude <nate.d@variscite.com>
 Signed-off-by: FrancescoFerraro <francesco.f@variscite.com>
+Signed-off-by: Alifer Moraes <alifer.m@variscite.com>
 ---
- src/posix/platform/spi_interface.cpp | 17 ++++++++++++++---
- 1 file changed, 14 insertions(+), 3 deletions(-)
+ src/posix/platform/spi_interface.cpp | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
 
 diff --git a/src/posix/platform/spi_interface.cpp b/src/posix/platform/spi_interface.cpp
-index 19d7e6958..91b94907b 100644
+index 4caa97769..c7e477c7e 100644
 --- a/src/posix/platform/spi_interface.cpp
 +++ b/src/posix/platform/spi_interface.cpp
-@@ -125,7 +125,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
+@@ -127,13 +127,13 @@ otError SpiInterface::Init(ReceiveFrameCallback aCallback, void *aCallbackContex
  
-     spiGpioIntDevice   = aRadioUrl.GetValue("gpio-int-device");
-     spiGpioResetDevice = aRadioUrl.GetValue("gpio-reset-device");
+     spiGpioIntDevice   = mRadioUrl.GetValue("gpio-int-device");
+     spiGpioResetDevice = mRadioUrl.GetValue("gpio-reset-device");
 -    if (!spiGpioIntDevice || !spiGpioResetDevice)
 +    if (!spiGpioIntDevice)
      {
          DieNow(OT_EXIT_INVALID_ARGUMENTS);
      }
-@@ -144,7 +144,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
-     }
-     else
-     {
--        DieNow(OT_EXIT_INVALID_ARGUMENTS);
-+        syslog(LOG_INFO, "Note: No gpio-reset-line provided");
-     }
-     if ((value = aRadioUrl.GetValue("spi-mode")))
-     {
-@@ -188,7 +188,13 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
-         otLogNotePlat("SPI interface enters polling mode.");
+ 
+     SuccessOrDie(mRadioUrl.ParseUint8("gpio-int-line", spiGpioIntLine));
+-    SuccessOrDie(mRadioUrl.ParseUint8("gpio-reset-line", spiGpioResetLine));
++    VerifyOrDie(mRadioUrl.ParseUint8("gpio-reset-line", spiGpioResetLine) != OT_ERROR_INVALID_ARGS, OT_EXIT_INVALID_ARGUMENTS);
+     VerifyOrDie(mRadioUrl.ParseUint8("spi-mode", spiMode) != OT_ERROR_INVALID_ARGS, OT_EXIT_INVALID_ARGUMENTS);
+     VerifyOrDie(mRadioUrl.ParseUint32("spi-speed", spiSpeed) != OT_ERROR_INVALID_ARGS, OT_EXIT_INVALID_ARGUMENTS);
+     VerifyOrDie(mRadioUrl.ParseUint32("spi-reset-delay", spiResetDelay) != OT_ERROR_INVALID_ARGS,
+@@ -160,7 +160,14 @@ otError SpiInterface::Init(ReceiveFrameCallback aCallback, void *aCallbackContex
+         LogNote("SPI interface enters polling mode.");
      }
  
 -    InitResetPin(spiGpioResetDevice, spiGpioResetLine);
@@ -57,17 +56,18 @@ index 19d7e6958..91b94907b 100644
 +        InitResetPin(spiGpioResetDevice, spiGpioResetLine);
 +    } else
 +    {
-+        syslog(LOG_INFO, "Note: No gpio-reset-device provided");
++        LogNote("No gpio-reset-device provided");
 +    }
-     InitSpiDev(aRadioUrl.GetPath(), spiMode, spiSpeed);
++
+     InitSpiDev(mRadioUrl.GetPath(), spiMode, spiSpeed);
  
-     return OT_ERROR_NONE;
-@@ -332,6 +338,11 @@ exit:
+     mReceiveFrameCallback = aCallback;
+@@ -312,6 +319,11 @@ exit:
  
  void SpiInterface::TriggerReset(void)
  {
 +    if (mResetGpioValueFd < 0) {
-+        syslog(LOG_INFO, "Note: Hardware reset skipped because no pin is provided");
++        LogNote("Hardware reset skipped because no pin is provided");
 +        return;
 +    }
 +
@@ -75,5 +75,5 @@ index 19d7e6958..91b94907b 100644
      SetGpioValue(mResetGpioValueFd, 0);
  
 -- 
-2.46.1
+2.43.0
 
